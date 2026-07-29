@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Appsur\FacturasIa\Support;
 
+use Appsur\FacturasIa\Settings\FacturasIaSettings;
+
 /**
  * Comprueba si la suma de importes de las líneas cuadra con el total de la factura,
  * probando los IVA configurados sobre la base (o el IVA por línea). No depende de que
@@ -42,13 +44,15 @@ class CuadreChecker
             return true;
         }
 
+        $settings = FacturasIaSettings::resolve();
         $portes = is_numeric($json['portes'] ?? null) ? (float) $json['portes'] : 0.0;
-        $tolAbs = (float) config('facturas-ia.cuadre.tolerance_abs', 0.5);
-        $tolPct = (float) config('facturas-ia.cuadre.tolerance_pct', 0.01);
+        $tolAbs = $settings?->cuadreToleranceAbs ?? (float) config('facturas-ia.cuadre.tolerance_abs', 0.5);
+        $tolPct = $settings?->cuadreTolerancePct ?? (float) config('facturas-ia.cuadre.tolerance_pct', 0.01);
         $tol = max($tolAbs, abs($total) * $tolPct);
 
+        $rates = $settings?->cuadreIvaRates ?: (array) config('facturas-ia.cuadre.iva_rates', [0, 4, 10, 21]);
         $candidates = [$withLineIva, $withLineIva + $portes];
-        foreach ((array) config('facturas-ia.cuadre.iva_rates', [0, 4, 10, 21]) as $pct) {
+        foreach ($rates as $pct) {
             $rate = 1 + ((float) $pct) / 100;
             $candidates[] = $base * $rate;                 // solo líneas
             $candidates[] = ($base + $portes) * $rate;     // líneas + portes, mismo IVA

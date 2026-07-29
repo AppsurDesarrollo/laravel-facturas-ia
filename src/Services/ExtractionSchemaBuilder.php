@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Appsur\FacturasIa\Services;
 
+use Appsur\FacturasIa\Settings\FacturasIaSettings;
+
 /**
  * Construye un JSON Schema válido para OpenAI Structured Outputs (strict) a partir
  * de los campos configurables en config('facturas-ia.fields').
@@ -17,7 +19,7 @@ class ExtractionSchemaBuilder
 {
     public function build(): array
     {
-        $fields = (array) config('facturas-ia.fields', []);
+        $fields = FacturasIaSettings::resolve()?->fields ?: (array) config('facturas-ia.fields', []);
         $properties = [];
 
         // Un objeto sin propiedades es rechazado por OpenAI en strict mode: si un grupo no

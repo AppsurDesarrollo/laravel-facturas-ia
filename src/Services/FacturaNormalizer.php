@@ -10,6 +10,7 @@ use Appsur\FacturasIa\Models\ExtractionRun;
 use Appsur\FacturasIa\Models\Factura;
 use Appsur\FacturasIa\Models\Proveedor;
 use Appsur\FacturasIa\Models\Receptor;
+use Appsur\FacturasIa\Settings\FacturasIaSettings;
 use Appsur\FacturasIa\Support\CuadreChecker;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -125,7 +126,8 @@ class FacturaNormalizer
             return $explicit;
         }
 
-        $own = array_filter(array_map([self::class, 'normalizeNif'], (array) config('facturas-ia.own_nifs', [])));
+        $ownRaw = FacturasIaSettings::resolve()?->ownNifs ?: (array) config('facturas-ia.own_nifs', []);
+        $own = array_filter(array_map([self::class, 'normalizeNif'], $ownRaw));
         if (empty($own)) {
             return null;
         }

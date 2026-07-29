@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Appsur\FacturasIa\Services;
 
+use Appsur\FacturasIa\Settings\FacturasIaSettings;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -19,7 +20,7 @@ class OpenAiUsageService
 {
     public function resolveAdminKey(): ?string
     {
-        return config('facturas-ia.openai.admin_key') ?: null;
+        return FacturasIaSettings::resolve()?->openaiAdminKey ?: (config('facturas-ia.openai.admin_key') ?: null);
     }
 
     public function hasAdminKey(): bool
@@ -29,7 +30,7 @@ class OpenAiUsageService
 
     public function projectId(): ?string
     {
-        return config('facturas-ia.openai.project_id') ?: null;
+        return FacturasIaSettings::resolve()?->openaiProjectId ?: (config('facturas-ia.openai.project_id') ?: null);
     }
 
     /** Coste por bucket diario desde $startTime (unix seconds), desglosado por line_item. */
@@ -71,7 +72,7 @@ class OpenAiUsageService
         foreach ($params as $k => $v) {
             $qs[] = urlencode($k).'='.urlencode((string) $v);
         }
-        $base = rtrim((string) config('facturas-ia.openai.base_url', 'https://api.openai.com/v1'), '/');
+        $base = rtrim((string) (FacturasIaSettings::resolve()?->openaiBaseUrl ?: config('facturas-ia.openai.base_url', 'https://api.openai.com/v1')), '/');
         $url = $base.$path.'?'.implode('&', $qs);
 
         try {

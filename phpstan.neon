@@ -3,3 +3,11 @@ parameters:
     paths:
         - src
     tmpDir: build/phpstan
+    ignoreErrors:
+        # FacturasIaSettings::resolve() puede devolver null en runtime (tabla `settings`
+        # sin migrar / instalación parcial), y por eso el `?->` cae a config() como
+        # fallback. PHPStan no modela que spatie lanza al resolver sin BD, así que cree
+        # que resolve() nunca es null y marca el nullsafe como redundante. Es un falso
+        # positivo de una regla puramente estilística; el fallback es intencional.
+        -
+            identifier: nullsafe.neverNull

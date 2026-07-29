@@ -3,6 +3,31 @@
 Todos los cambios relevantes de `appsur/laravel-facturas-ia`.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y [SemVer](https://semver.org/lang/es/).
 
+## [2.0.0]
+
+> **Breaking:** los ajustes editables pasan de `config/facturas-ia.php` a la **base de datos**
+> (spatie/laravel-settings). Requiere instalar spatie, publicar la tabla `settings` y la
+> migración de ajustes del paquete, y `migrate`. Ver README → *Instalación* y *Ajustes en BD*.
+
+### Added
+- **Ajustes en BD + panel:** clase `Settings\FacturasIaSettings` (grupo `facturas-ia`) y
+  migración `database/settings/*` que siembra desde `config`. Todo lo editable vive en BD:
+  `prompt`, `defaultModel` / `fallbackModel`, catálogo `models` (con precios), `fields`,
+  `ownNifs`, `dedupe`, tolerancias de cuadre y **las claves de OpenAI** (`openaiKey`,
+  `openaiAdminKey`, `openaiProjectId`, `openaiBaseUrl`).
+- **Panel de Ajustes publicable** (React/Inertia + shadcn base, portable): página
+  `resources/js/pages/facturas-ia/settings.tsx`, `Http\Controllers\SettingsController`
+  (`edit`/`update`) y rutas `facturas-ia.settings.edit` / `.update` (tag `facturas-ia-views`;
+  prefijo/middleware configurables en `config facturas-ia.routes`).
+- Los servicios leen de BD con **fallback a `config`/`.env`**: si un ajuste está vacío o la
+  tabla `settings` aún no existe, se usa el valor de config. El `.env` queda **opcional**.
+
+### Changed
+- `config/facturas-ia.php` conserva `prompt`, `models`, `fields`, `own_nifs`, `dedupe`,
+  `cuadre` y `openai.*` **solo como valores por defecto** para sembrar la BD; añade el bloque
+  `routes` (prefix/middleware) y `view` para el panel.
+- Nueva dependencia `spatie/laravel-settings: ^3.0`.
+
 ## [1.2.0]
 
 ### Added

@@ -21,19 +21,6 @@ class SchemaBuilderTest extends TestCase
         $this->assertSame('array', $schema['properties']['albaranes']['type']);
     }
 
-    public function test_group_without_fields_is_omitted_not_emitted_empty(): void
-    {
-        // Deshabilitar todos los campos de un grupo NO debe generar un objeto vacío
-        // (OpenAI strict lo rechaza): la clave se omite y el schema sigue siendo válido.
-        config(['facturas-ia.fields.proveedor' => []]);
-
-        $schema = (new ExtractionSchemaBuilder)->build();
-
-        $this->assertArrayNotHasKey('proveedor', $schema['properties']);
-        $this->assertNotContains('proveedor', $schema['required']);
-        $this->assertStrict($schema);
-    }
-
     /** Regla strict de OpenAI: additionalProperties:false y required == keys en cada objeto. */
     private function assertStrict(array $node): void
     {

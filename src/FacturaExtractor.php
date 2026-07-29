@@ -14,6 +14,7 @@ use Appsur\FacturasIa\Models\Factura;
 use Appsur\FacturasIa\Services\DocumentUploadService;
 use Appsur\FacturasIa\Services\ExtractionService;
 use Appsur\FacturasIa\Services\FacturaNormalizer;
+use Appsur\FacturasIa\Settings\FacturasIaSettings;
 use Appsur\FacturasIa\Support\CuadreChecker;
 use Appsur\FacturasIa\Support\OpenAiModelCatalog;
 use Illuminate\Http\UploadedFile;
@@ -39,7 +40,7 @@ class FacturaExtractor
         $this->assertConfigured();
 
         // Dedupe: si ya se extrajo un PDF idéntico, se devuelve esa factura sin gastar OpenAI.
-        if (config('facturas-ia.dedupe', true)) {
+        if (FacturasIaSettings::resolve()?->dedupe ?? config('facturas-ia.dedupe', true)) {
             $existing = $this->existingFacturaByHash(DocumentUploadService::hashFor($pdf));
             if ($existing !== null) {
                 return $existing;
@@ -56,7 +57,7 @@ class FacturaExtractor
     {
         $this->assertConfigured();
 
-        if (config('facturas-ia.dedupe', true)) {
+        if (FacturasIaSettings::resolve()?->dedupe ?? config('facturas-ia.dedupe', true)) {
             $existing = $this->existingFacturaByHash(DocumentUploadService::hashFor($pdf));
             if ($existing !== null) {
                 return $existing->document;
@@ -74,8 +75,9 @@ class FacturaExtractor
     {
         $this->assertConfigured();
 
-        $default = (string) config('facturas-ia.default_model');
-        $fallback = config('facturas-ia.fallback_model');
+        $settings = FacturasIaSettings::resolve();
+        $default = $settings?->defaultModel ?: (string) config('facturas-ia.default_model');
+        $fallback = $settings?->fallbackModel ?? config('facturas-ia.fallback_model');
 
         $run = $this->extractor->run($document, $default, $userId);
         $best = $run;
@@ -129,13 +131,13 @@ class FacturaExtractor
 
     private function assertConfigured(): void
     {
-        if (! config('facturas-ia.openai.key')) {
-            throw new ExtractionException('Falta la clave de OpenAI (OPENAI_API_KEY / config facturas-ia.openai.key).');
+        if (! $this->extractor->resolveApiKey()) {
+            throw new ExtractionException('Falta la clave de OpenAI (edítala en el panel de Ajustes o en OPENAI_API_KEY).');
         }
 
-        $default = (string) config('facturas-ia.default_model');
+        $default = FacturasIaSettings::resolve()?->defaultModel ?: (string) config('facturas-ia.default_model');
         if (OpenAiModelCatalog::get($default) === null) {
-            throw new ExtractionException("El modelo por defecto '{$default}' no está en el catálogo (config facturas-ia.models).");
+            throw new ExtractionException("El modelo por defecto '{$default}' no está en el catálogo de modelos.");
         }
     }
 }

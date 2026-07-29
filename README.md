@@ -8,40 +8,57 @@ Extracción de **facturas españolas en PDF con IA** (OpenAI) y guardado **estru
 Trae **todo de serie**: el modelo de IA, el modelo de respaldo, el **prompt** afinado para
 facturas españolas (NIF con prefijo de país, IVA, varios albaranes por factura, portes,
 abonos con total negativo, completitud), los **campos** de la factura y las **tablas** de BD.
-Funciona nada más instalarlo y luego lo puedes editar en `config/facturas-ia.php`.
+Funciona nada más instalarlo.
 
-Es **headless**: no monta rutas ni UI ni envía datos a ningún sitio. Tú lo llamas y decides
-qué hacer con la `Factura` que devuelve (o escuchas sus eventos).
+**Ajustes en base de datos + panel (v2.0):** todo lo editable (prompt, modelos y precios,
+campos, NIF propios, tolerancias de cuadre, **y las claves de OpenAI**) se guarda en BD vía
+[spatie/laravel-settings](https://github.com/spatie/laravel-settings) y se edita desde un
+**panel de Ajustes** que el propio paquete aporta (página React/Inertia publicable). El
+`config/facturas-ia.php` queda solo para **infra** (disco, rutas, prefijo de tablas) y como
+**valores por defecto** para sembrar la BD. Ver [Ajustes en BD + panel](#ajustes-en-bd--panel).
+
+El **motor de extracción sigue siendo headless**: `FacturasIa::fromPdf()` no envía datos a
+ningún sitio; tú decides qué hacer con la `Factura` (o escuchas sus eventos). Lo único con UI
+es el panel de Ajustes, y es **opcional** (solo si publicas la vista y la enlazas).
 
 ## Requisitos
 - PHP ^8.2 · Laravel 11, 12 o 13
 - Una API key de OpenAI con acceso a la Responses API (visión + structured outputs)
+- [spatie/laravel-settings](https://github.com/spatie/laravel-settings) ^3.0 (se instala como
+  dependencia; requiere la tabla `settings`)
+- Solo para el **panel de Ajustes**: la app debe usar Inertia + React (stack shadcn/ui). Si no
+  usas el panel, puedes configurarlo todo por `config`/`.env` y `tinker`.
 
 ## Instalación
 
-El paquete vive en un repo privado de AppsurDesarrollo (no está en Packagist):
+El paquete vive en el repo público de AppsurDesarrollo (no está en Packagist), así que se
+instala vía VCS:
 
 ```bash
 composer config repositories.appsur-facturas-ia vcs https://github.com/AppsurDesarrollo/laravel-facturas-ia
-composer require appsur/laravel-facturas-ia:^1.0
+composer require appsur/laravel-facturas-ia:^2.0
 
-php artisan vendor:publish --tag=facturas-ia-config      # config editable (opcional)
-php artisan vendor:publish --tag=facturas-ia-migrations
-php artisan migrate
+# Tabla `settings` de spatie (una vez por app, si no la tienes ya):
+php artisan vendor:publish --provider="Spatie\LaravelSettings\LaravelSettingsServiceProvider" --tag=migrations
+
+# Del paquete:
+php artisan vendor:publish --tag=facturas-ia-config       # infra + defaults (opcional)
+php artisan vendor:publish --tag=facturas-ia-migrations   # tablas fia_*
+php artisan vendor:publish --tag=facturas-ia-settings     # migración que siembra los ajustes en BD
+php artisan vendor:publish --tag=facturas-ia-views        # panel de Ajustes (resources/js/pages/facturas-ia/)
+
+php artisan migrate   # crea tablas + siembra el grupo de ajustes `facturas-ia`
 ```
 
-`.env`:
+`.env` **opcional** (v2.0): al ser todo editable en el panel/BD, no necesitas `.env`. Las
+variables solo se usan como **valor inicial** al sembrar la BD en el primer `migrate` y como
+**fallback** si el ajuste está vacío en BD:
 
 ```env
-OPENAI_API_KEY="sk-..."
-# Opcionales (panel de gastos, Usage/Cost API a nivel organización):
-OPENAI_ADMIN_KEY="sk-admin-..."
-OPENAI_PROJECT_ID="proj_..."
-# Opcionales (por defecto ya son estos):
-FACTURAS_IA_MODEL=gpt-5.4-mini
-FACTURAS_IA_FALLBACK=gpt-4.1
-# Tu(s) NIF para distinguir facturas emitidas (venta) de recibidas (compra):
-FACTURAS_IA_OWN_NIFS="B12345678,ES-B99999999"
+OPENAI_API_KEY="sk-..."           # o déjalo vacío y pon la clave en el panel de Ajustes
+OPENAI_ADMIN_KEY="sk-admin-..."   # panel de gastos (Usage/Cost API), opcional
+OPENAI_PROJECT_ID="proj_..."      # opcional
+FACTURAS_IA_OWN_NIFS="B12345678,ES-B99999999"  # NIF propios (emitidas vs recibidas)
 ```
 
 > O usa el comando `/install-facturas-ia` (Claude Code) que hace todo esto por ti.
@@ -122,21 +139,62 @@ El paquete no envía nada; si quieres reaccionar (p. ej. mandar el JSON a tu API
 - `Appsur\FacturasIa\Events\FacturaExtracted` (`$event->factura`, `$event->run`)
 - `Appsur\FacturasIa\Events\ExtractionFailed` (`$event->document`, `$event->run`)
 
-## Configuración
+## Ajustes en BD + panel
 
-Todo se edita en `config/facturas-ia.php`:
+En v2.0 los ajustes **editables** viven en la **base de datos** (grupo `facturas-ia` de la
+tabla `settings` de spatie) y se editan desde un **panel** que trae el paquete. Los servicios
+leen de BD y, si un ajuste está vacío o la tabla aún no está migrada, **caen a `config`/`.env`**.
 
-- **`default_model` / `fallback_model`** — modelo por defecto (`gpt-5.4-mini`) y el de respaldo
-  al que se reprocesa si no cuadra (`gpt-4.1`; `null` desactiva el reproceso).
-- **`own_nifs`** — tu(s) NIF (env `FACTURAS_IA_OWN_NIFS`) para autodetectar `tipo`
-  (recibida/emitida) comparando con el emisor/receptor de cada factura.
-- **`dedupe`** — si es `true` (por defecto), no re-extrae un PDF idéntico ya procesado.
-- **`prompt`** — instrucciones de extracción.
-- **`fields`** — qué campos se extraen de proveedor/receptor/factura/albarán/línea
-  (activar/desactivar/añadir).
-- **`models`** — catálogo con precios (USD/1M tokens) para calcular el coste.
-- **`cuadre`** — tolerancias y tasas de IVA a probar.
+**Editable en BD / panel:** `prompt`, `defaultModel` / `fallbackModel`, `models` (catálogo +
+precios USD/1M), `fields` (campos por grupo), `ownNifs`, `dedupe`, tolerancias de cuadre
+(`cuadreToleranceAbs` / `cuadreTolerancePct` / `cuadreIvaRates`) y **las claves de OpenAI**
+(`openaiKey`, `openaiAdminKey`, `openaiProjectId`, `openaiBaseUrl`).
+
+**Solo en `config/facturas-ia.php` (infra + defaults, no en el panel):** `disk`, `path`,
+`table_prefix`, `routes` (`prefix` / `middleware`) y `view`. Estos valores también sirven de
+**semilla**: la migración de settings copia de `config` a BD en el primer `migrate`.
+
+### Cómo se resuelve cada ajuste
+`app(Appsur\FacturasIa\Settings\FacturasIaSettings::class)` (BD) → si está vacío o spatie no
+está listo → `config('facturas-ia.*')` → default del propio ajuste. Puedes cambiarlo todo por
+`tinker` sin panel:
+
+```php
+$s = app(Appsur\FacturasIa\Settings\FacturasIaSettings::class);
+$s->defaultModel = 'gpt-4.1';
+$s->openaiKey = 'sk-...';
+$s->save();
+```
+
+### Integrar el panel en tu `/ajustes`
+El paquete registra las rutas y renderiza la página publicada en
+`resources/js/pages/facturas-ia/settings.tsx` (Inertia + shadcn base, portable). No se puede
+inyectar dentro del `Tabs` de tu panel entre paquetes, así que **enlázalo** como un apartado
+más:
+
+- Ruta del panel (nombre): `facturas-ia.settings.edit` — por defecto en `/facturas-ia/ajustes`
+  (configurable con `routes.prefix`; middleware por defecto `['web','auth']`).
+- Añade en tu `/ajustes` una pestaña/enlace que navegue ahí, p. ej.:
+
+```tsx
+import { Link } from '@inertiajs/react';
+<Link href={route('facturas-ia.settings.edit')}>Extracción IA</Link>
+```
+
+> **Seguridad:** al guardar las claves de OpenAI en BD, quedan en la tabla `settings` en claro
+> (spatie no cifra por defecto). Protege la ruta del panel con el rol adecuado (ajusta
+> `facturas-ia.routes.middleware`), restringe el acceso a la BD y considera cifrar la columna
+> `payload` o dejar las claves en `.env` si tu modelo de amenazas lo requiere.
+
+## Configuración (infra)
+
+`config/facturas-ia.php` — lo que **no** va al panel:
+
 - **`disk` / `path` / `table_prefix`** — dónde se guarda el PDF y prefijo de las tablas (`fia_`).
+- **`routes.prefix` / `routes.middleware`** — URL y middleware del panel de Ajustes.
+- **`view`** — nombre del componente Inertia del panel (`facturas-ia/settings`).
+- El resto de claves (`prompt`, `models`, `fields`, `own_nifs`, `dedupe`, `cuadre`, `openai.*`,
+  `default_model` / `fallback_model`) siguen aquí **como valores por defecto** para sembrar la BD.
 
 ## Panel de gastos (opcional)
 

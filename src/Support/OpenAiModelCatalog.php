@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace Appsur\FacturasIa\Support;
 
+use Appsur\FacturasIa\Settings\FacturasIaSettings;
+
 /**
  * Catálogo de modelos de OpenAI: precios (USD por 1M de tokens) y capacidades.
- * Se lee de config('facturas-ia.models'), editable en el proyecto.
+ * Se lee de los ajustes en BD (editable en el panel); si no hay, cae a config.
  */
 class OpenAiModelCatalog
 {
     /** @return array<string, array{label:string,in:float,out:float,cached:?float,pdf:bool,reasoning:bool,sort:int}> */
     public static function priceMap(): array
     {
-        return (array) config('facturas-ia.models', []);
+        $models = FacturasIaSettings::resolve()?->models ?? [];
+
+        return $models !== [] ? $models : (array) config('facturas-ia.models', []);
     }
 
     /**

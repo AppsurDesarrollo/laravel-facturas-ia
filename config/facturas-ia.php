@@ -75,6 +75,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Panel de Ajustes (UI publicable)
+    |--------------------------------------------------------------------------
+    | El paquete registra un panel de Ajustes (Inertia/React) donde se editan en
+    | BD el prompt, modelos, campos, claves, etc. Elige el prefijo de ruta, el
+    | middleware que lo protege (mete aquí tu gate de admin) y el nombre de la
+    | vista Inertia publicada.
+    |
+    | NOTA: a partir de v2.0.0 estos ajustes viven en BD (spatie/laravel-settings)
+    | y los valores de abajo son solo los DEFAULTS con los que se siembra la BD.
+    */
+    'routes' => [
+        'prefix' => env('FACTURAS_IA_ROUTE_PREFIX', 'facturas-ia/ajustes'),
+        'middleware' => ['web', 'auth'],
+    ],
+    'view' => 'facturas-ia/settings',
+
+    /*
+    |--------------------------------------------------------------------------
     | Modelos de IA
     |--------------------------------------------------------------------------
     | default_model: modelo con el que se extrae primero.

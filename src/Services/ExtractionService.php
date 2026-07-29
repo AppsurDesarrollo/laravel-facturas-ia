@@ -6,6 +6,7 @@ namespace Appsur\FacturasIa\Services;
 
 use Appsur\FacturasIa\Models\Document;
 use Appsur\FacturasIa\Models\ExtractionRun;
+use Appsur\FacturasIa\Settings\FacturasIaSettings;
 use Appsur\FacturasIa\Support\OpenAiModelCatalog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -67,7 +68,7 @@ class ExtractionService
                         ],
                         [
                             'type' => 'input_text',
-                            'text' => (string) config('facturas-ia.prompt'),
+                            'text' => FacturasIaSettings::resolve()?->prompt ?? (string) config('facturas-ia.prompt'),
                         ],
                     ],
                 ]],
@@ -88,7 +89,7 @@ class ExtractionService
                 $payload['temperature'] = 0;
             }
 
-            $base = rtrim((string) config('facturas-ia.openai.base_url', 'https://api.openai.com/v1'), '/');
+            $base = rtrim((string) (FacturasIaSettings::resolve()?->openaiBaseUrl ?: config('facturas-ia.openai.base_url', 'https://api.openai.com/v1')), '/');
 
             $response = Http::withToken($apiKey)
                 ->timeout(120)
@@ -147,7 +148,7 @@ class ExtractionService
 
     public function resolveApiKey(): ?string
     {
-        return config('facturas-ia.openai.key') ?: null;
+        return FacturasIaSettings::resolve()?->openaiKey ?: (config('facturas-ia.openai.key') ?: null);
     }
 
     /**

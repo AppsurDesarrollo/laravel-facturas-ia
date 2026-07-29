@@ -8,6 +8,7 @@ use Appsur\FacturasIa\Events\ExtractionFailed;
 use Appsur\FacturasIa\Exceptions\ExtractionException;
 use Appsur\FacturasIa\FacturaExtractor;
 use Appsur\FacturasIa\Models\Document;
+use Appsur\FacturasIa\Settings\FacturasIaSettings;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
@@ -76,6 +77,9 @@ class ExtractorRobustnessTest extends TestCase
     public function test_missing_api_key_fails_fast_without_uploading(): void
     {
         Storage::fake('local');
+        $s = app(FacturasIaSettings::class);
+        $s->openaiKey = null;
+        $s->save();
         config(['facturas-ia.openai.key' => null]);
         Http::fake();
 
