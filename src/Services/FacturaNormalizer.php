@@ -18,12 +18,16 @@ use Throwable;
  */
 class FacturaNormalizer
 {
-    /** Crea/reemplaza la factura normalizada del documento a partir del run indicado. */
-    public static function fromRun(Document $document, ExtractionRun $run): void
+    /**
+     * Crea/reemplaza la factura normalizada del documento a partir del run indicado.
+     *
+     * @param  ?string  $tipo  'recibida' | 'emitida' para forzarlo; null autodetecta por NIF (config own_nifs).
+     */
+    public static function fromRun(Document $document, ExtractionRun $run, ?string $tipo = null): void
     {
         $json = $run->result_json;
 
-        DB::transaction(function () use ($json, $document, $run) {
+        DB::transaction(function () use ($json, $document, $run, $tipo) {
             $proveedor = self::firstOrCreateParty(Proveedor::class, $json['proveedor'] ?? []);
             $receptor = self::firstOrCreateParty(Receptor::class, $json['receptor'] ?? []);
 
@@ -46,6 +50,7 @@ class FacturaNormalizer
                 'document_id' => $document->id,
                 'extraction_run_id' => $run->id,
                 'numero' => $numero,
+                'tipo' => self::resolveTipo($tipo, $proveedor, $receptor),
                 'fecha' => self::date($json['fecha'] ?? null),
                 'total' => $extractedTotal,
                 'portes' => self::num($json['portes'] ?? null),
@@ -105,6 +110,49 @@ class FacturaNormalizer
         }
 
         return $class::create($attrs);
+    }
+
+    /**
+     * Dirección de la factura. Explícito manda; si no, autodetecta comparando tu NIF
+     * (config own_nifs) con emisor/receptor: tu NIF emisor → emitida; receptor → recibida.
+     */
+    private static function resolveTipo(?string $explicit, ?object $proveedor, ?object $receptor): ?string
+    {
+        if ($explicit !== null) {
+            return $explicit;
+        }
+
+        $own = array_filter(array_map([self::class, 'normalizeNif'], (array) config('facturas-ia.own_nifs', [])));
+        if (empty($own)) {
+            return null;
+        }
+
+        $prov = self::normalizeNif($proveedor->nif ?? null);
+        $rec = self::normalizeNif($receptor->nif ?? null);
+
+        if ($prov !== null && in_array($prov, $own, true)) {
+            return Factura::TIPO_EMITIDA;   // tu empresa emite → venta
+        }
+        if ($rec !== null && in_array($rec, $own, true)) {
+            return Factura::TIPO_RECIBIDA;  // tu empresa recibe → compra
+        }
+
+        return null;
+    }
+
+    /** Normaliza un NIF para comparar: sin espacios/guiones, mayúsculas y sin prefijo de país (ES). */
+    private static function normalizeNif(?string $nif): ?string
+    {
+        if ($nif === null) {
+            return null;
+        }
+        $n = strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $nif));
+        // Quita un prefijo de país de 2 letras (ES...) si deja un NIF de longitud normal.
+        if (strlen($n) > 9 && preg_match('/^[A-Z]{2}[0-9A-Z]/', $n)) {
+            $n = substr($n, 2);
+        }
+
+        return $n !== '' ? $n : null;
     }
 
     private static function str($value): ?string

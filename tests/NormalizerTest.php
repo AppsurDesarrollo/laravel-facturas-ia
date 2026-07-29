@@ -67,4 +67,27 @@ class NormalizerTest extends TestCase
 
         $this->assertTrue($doc2->refresh()->factura->duplicada);
     }
+
+    public function test_tipo_can_be_forced(): void
+    {
+        [$doc, $run] = $this->makeRun($this->sample('T-1'));
+        FacturaNormalizer::fromRun($doc, $run, 'emitida');
+
+        $this->assertSame('emitida', $doc->refresh()->factura->tipo);
+    }
+
+    public function test_tipo_autodetected_from_own_nifs(): void
+    {
+        // Mi NIF es el RECEPTOR → factura recibida (compra).
+        config(['facturas-ia.own_nifs' => ['B99999999']]); // sin prefijo ES, debe casar igual
+        [$doc, $run] = $this->makeRun($this->sample('R-1'));
+        FacturaNormalizer::fromRun($doc, $run);
+        $this->assertSame('recibida', $doc->refresh()->factura->tipo);
+
+        // Mi NIF es el EMISOR → factura emitida (venta).
+        config(['facturas-ia.own_nifs' => ['ES-B12345678']]);
+        [$doc2, $run2] = $this->makeRun($this->sample('E-1'));
+        FacturaNormalizer::fromRun($doc2, $run2);
+        $this->assertSame('emitida', $doc2->refresh()->factura->tipo);
+    }
 }

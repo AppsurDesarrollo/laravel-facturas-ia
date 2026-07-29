@@ -25,16 +25,20 @@ class FacturaExtractor
         private ExtractionService $extractor,
     ) {}
 
-    /** Sube un PDF (UploadedFile o ruta) y lo procesa de principio a fin. */
-    public function fromPdf(UploadedFile|string $pdf, ?int $userId = null): Factura
+    /**
+     * Sube un PDF (UploadedFile o ruta) y lo procesa de principio a fin.
+     *
+     * @param  ?string  $tipo  'recibida' | 'emitida' para forzar la dirección; null autodetecta por NIF.
+     */
+    public function fromPdf(UploadedFile|string $pdf, ?int $userId = null, ?string $tipo = null): Factura
     {
         $document = $this->uploader->store($pdf, $userId);
 
-        return $this->extractDocument($document, $userId);
+        return $this->extractDocument($document, $userId, $tipo);
     }
 
     /** Procesa un documento ya subido: extrae (+ reproceso), normaliza y devuelve la Factura. */
-    public function extractDocument(Document $document, ?int $userId = null): Factura
+    public function extractDocument(Document $document, ?int $userId = null, ?string $tipo = null): Factura
     {
         $default = (string) config('facturas-ia.default_model');
         $fallback = config('facturas-ia.fallback_model');
@@ -60,7 +64,7 @@ class FacturaExtractor
             throw new ExtractionException($best->error ?: 'La extracción de la factura falló.');
         }
 
-        FacturaNormalizer::fromRun($document, $best);
+        FacturaNormalizer::fromRun($document, $best, $tipo);
 
         $factura = $document->factura()->with(['proveedor', 'receptor', 'albaranes.items'])->first();
 

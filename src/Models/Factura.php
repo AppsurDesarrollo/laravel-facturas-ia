@@ -11,6 +11,10 @@ class Factura extends Model
 {
     use PrefixedTable;
 
+    /** Dirección de la factura. */
+    public const TIPO_RECIBIDA = 'recibida'; // compra: la recibes de un proveedor
+    public const TIPO_EMITIDA = 'emitida';   // venta: la emites tú a un cliente
+
     protected string $baseTable = 'facturas';
 
     protected $fillable = [
@@ -19,6 +23,7 @@ class Factura extends Model
         'document_id',
         'extraction_run_id',
         'numero',
+        'tipo',
         'fecha',
         'total',
         'portes',
@@ -26,6 +31,16 @@ class Factura extends Model
         'revisada',
         'duplicada',
     ];
+
+    public function scopeRecibidas($query)
+    {
+        return $query->where('tipo', self::TIPO_RECIBIDA);
+    }
+
+    public function scopeEmitidas($query)
+    {
+        return $query->where('tipo', self::TIPO_EMITIDA);
+    }
 
     protected function casts(): array
     {

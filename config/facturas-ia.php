@@ -74,6 +74,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tu(s) NIF(s) — dirección de la factura (recibida vs emitida)
+    |--------------------------------------------------------------------------
+    | NIF(s) de TU empresa. Sirve para autodetectar el 'tipo' de cada factura:
+    |   - tu NIF es el EMISOR   → 'emitida'  (venta, la mandas tú a un cliente)
+    |   - tu NIF es el RECEPTOR → 'recibida' (compra, la recibes de un proveedor)
+    | Varios NIF separados por comas. La comparación ignora espacios, guiones y el
+    | prefijo de país (ES). También puedes forzar el tipo al llamar a fromPdf().
+    */
+    'own_nifs' => array_values(array_filter(array_map('trim', explode(',', (string) env('FACTURAS_IA_OWN_NIFS', ''))))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Credenciales OpenAI
     |--------------------------------------------------------------------------
     | key: obligatoria para extraer. admin_key/project_id: solo para el panel de

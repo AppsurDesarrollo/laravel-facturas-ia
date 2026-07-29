@@ -38,6 +38,8 @@ OPENAI_PROJECT_ID="proj_..."
 # Opcionales (por defecto ya son estos):
 FACTURAS_IA_MODEL=gpt-5.4-mini
 FACTURAS_IA_FALLBACK=gpt-4.1
+# Tu(s) NIF para distinguir facturas emitidas (venta) de recibidas (compra):
+FACTURAS_IA_OWN_NIFS="B12345678,ES-B99999999"
 ```
 
 > O usa el comando `/install-facturas-ia` (Claude Code) que hace todo esto por ti.
@@ -69,6 +71,29 @@ foreach ($factura->albaranes as $albaran) {
 
 Si la extracción falla lanza `Appsur\FacturasIa\Exceptions\ExtractionException`.
 
+### Recibidas (compra) vs emitidas (venta)
+
+Cada factura guarda su **`tipo`**: `recibida` (la recibes de un proveedor) o `emitida`
+(la emites tú a un cliente). Dos formas de fijarlo:
+
+```php
+// 1) Explícito: si ya sabes en qué flujo estás (subida de "recibidas" vs "emitidas").
+$factura = FacturasIa::fromPdf($pdf, auth()->id(), tipo: 'emitida');
+
+// 2) Automático: define tu(s) NIF en FACTURAS_IA_OWN_NIFS (o config own_nifs) y se
+//    deduce solo: tu NIF como emisor → 'emitida'; como receptor → 'recibida'.
+$factura = FacturasIa::fromPdf($pdf);
+$factura->tipo; // 'recibida' | 'emitida' | null (si no se pudo determinar)
+```
+
+Consultas cómodas con los scopes del modelo:
+
+```php
+use Appsur\FacturasIa\Models\Factura;
+Factura::recibidas()->sum('total'); // compras (IVA soportado)
+Factura::emitidas()->sum('total');  // ventas   (IVA repercutido)
+```
+
 ### Eventos (opcionales)
 El paquete no envía nada; si quieres reaccionar (p. ej. mandar el JSON a tu API), escucha:
 
@@ -81,6 +106,8 @@ Todo se edita en `config/facturas-ia.php`:
 
 - **`default_model` / `fallback_model`** — modelo por defecto (`gpt-5.4-mini`) y el de respaldo
   al que se reprocesa si no cuadra (`gpt-4.1`; `null` desactiva el reproceso).
+- **`own_nifs`** — tu(s) NIF (env `FACTURAS_IA_OWN_NIFS`) para autodetectar `tipo`
+  (recibida/emitida) comparando con el emisor/receptor de cada factura.
 - **`prompt`** — instrucciones de extracción.
 - **`fields`** — qué campos se extraen de proveedor/receptor/factura/albarán/línea
   (activar/desactivar/añadir).
