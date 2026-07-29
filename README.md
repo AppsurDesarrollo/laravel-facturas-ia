@@ -1,5 +1,7 @@
 # appsur/laravel-facturas-ia
 
+[![tests](https://github.com/AppsurDesarrollo/laravel-facturas-ia/actions/workflows/tests.yml/badge.svg)](https://github.com/AppsurDesarrollo/laravel-facturas-ia/actions/workflows/tests.yml)
+
 Extracción de **facturas españolas en PDF con IA** (OpenAI) y guardado **estructurado**
 (proveedor, receptor, factura, albaranes y líneas) para cualquier proyecto Laravel.
 
