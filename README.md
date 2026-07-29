@@ -58,7 +58,7 @@ variables solo se usan como **valor inicial** al sembrar la BD en el primer `mig
 OPENAI_API_KEY="sk-..."           # o déjalo vacío y pon la clave en el panel de Ajustes
 OPENAI_ADMIN_KEY="sk-admin-..."   # panel de gastos (Usage/Cost API), opcional
 OPENAI_PROJECT_ID="proj_..."      # opcional
-FACTURAS_IA_OWN_NIFS="B12345678,ES-B99999999"  # NIF propios (emitidas vs recibidas)
+FACTURAS_IA_OWN_NIFS="TU_NIF"     # ejemplo; vacío por defecto. Tus NIF (coma para varios: "B12345678,ES-B99999999") → emitidas vs recibidas
 ```
 
 > O usa el comando `/install-facturas-ia` (Claude Code) que hace todo esto por ti.
