@@ -1,0 +1,20 @@
+<?php
+
+namespace Appsur\FacturasIa\Facades;
+
+use Appsur\FacturasIa\Models\Factura;
+use Illuminate\Support\Facades\Facade;
+
+/**
+ * @method static Factura fromPdf(\Illuminate\Http\UploadedFile|string $pdf, ?int $userId = null)
+ * @method static Factura extractDocument(\Appsur\FacturasIa\Models\Document $document, ?int $userId = null)
+ *
+ * @see \Appsur\FacturasIa\FacturaExtractor
+ */
+class FacturasIa extends Facade
+{
+    protected static function getFacadeAccessor(): string
+    {
+        return 'facturas-ia';
+    }
+}

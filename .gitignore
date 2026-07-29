@@ -1,0 +1,8 @@
+/vendor
+/_staging
+composer.lock
+.phpunit.result.cache
+.phpunit.cache
+/build
+.DS_Store
+Thumbs.db
