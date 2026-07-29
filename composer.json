@@ -4,7 +4,11 @@
     "keywords": ["laravel", "facturas", "invoices", "openai", "ia", "ocr", "extraccion", "spain"],
     "license": "proprietary",
     "authors": [
-        { "name": "AppsurDesarrollo" }
+        {
+            "name": "Kike (emarino-appsur)",
+            "homepage": "https://github.com/emarino-appsur",
+            "role": "Developer"
+        }
     ],
     "require": {
         "php": "^8.2",
