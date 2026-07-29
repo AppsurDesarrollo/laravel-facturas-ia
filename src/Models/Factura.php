@@ -1,18 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Appsur\FacturasIa\Models;
 
 use Appsur\FacturasIa\Models\Concerns\PrefixedTable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $proveedor_id
+ * @property int|null $receptor_id
+ * @property int $document_id
+ * @property int|null $extraction_run_id
+ * @property string|null $numero
+ * @property string|null $tipo
+ * @property Carbon|null $fecha
+ * @property string|null $total
+ * @property string|null $portes
+ * @property bool|null $cuadra
+ * @property bool $revisada
+ * @property bool $duplicada
+ * @property-read Proveedor|null $proveedor
+ * @property-read Receptor|null $receptor
+ * @property-read Document|null $document
+ * @property-read Collection<int, Albaran> $albaranes
+ */
 class Factura extends Model
 {
     use PrefixedTable;
 
     /** Dirección de la factura. */
     public const TIPO_RECIBIDA = 'recibida'; // compra: la recibes de un proveedor
+
     public const TIPO_EMITIDA = 'emitida';   // venta: la emites tú a un cliente
 
     protected string $baseTable = 'facturas';

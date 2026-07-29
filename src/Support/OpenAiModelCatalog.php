@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Appsur\FacturasIa\Support;
 
 /**
@@ -25,7 +27,7 @@ class OpenAiModelCatalog
         foreach (self::priceMap() as $id => $m) {
             $out[] = ['model_id' => $id] + $m;
         }
-        usort($out, fn ($a, $b) => ($a['sort'] ?? 0) <=> ($b['sort'] ?? 0));
+        usort($out, fn ($a, $b) => $a['sort'] <=> $b['sort']);
 
         return $out;
     }

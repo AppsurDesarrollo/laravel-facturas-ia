@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Appsur\FacturasIa\Tests;
 
 use Appsur\FacturasIa\Events\FacturaExtracted;

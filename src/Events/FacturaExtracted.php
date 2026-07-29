@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Appsur\FacturasIa\Events;
 
 use Appsur\FacturasIa\Models\ExtractionRun;

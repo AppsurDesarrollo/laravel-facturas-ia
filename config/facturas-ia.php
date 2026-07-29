@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 // Prompt de extracción por defecto (afinado para facturas españolas). Editable.
 $prompt = <<<'TXT'
 Eres un extractor experto de datos de facturas españolas. Recibes una factura en PDF y devuelves EXCLUSIVAMENTE el JSON solicitado, respetando el esquema al detalle.
@@ -51,6 +53,16 @@ return [
     */
     'disk' => env('FACTURAS_IA_DISK', 'local'),
     'path' => env('FACTURAS_IA_PATH', 'facturas-ia'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dedupe por hash
+    |--------------------------------------------------------------------------
+    | Si subes un PDF idéntico a uno ya extraído (mismo SHA-256), se devuelve la
+    | factura existente sin volver a llamar a OpenAI (ahorra coste). Pon false
+    | para re-extraer siempre.
+    */
+    'dedupe' => (bool) env('FACTURAS_IA_DEDUPE', true),
 
     /*
     |--------------------------------------------------------------------------

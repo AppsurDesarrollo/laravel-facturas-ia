@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Appsur\FacturasIa\Services;
 
+use Appsur\FacturasIa\Models\Albaran;
 use Appsur\FacturasIa\Models\Document;
 use Appsur\FacturasIa\Models\ExtractionRun;
 use Appsur\FacturasIa\Models\Factura;
@@ -59,6 +62,7 @@ class FacturaNormalizer
             ]);
 
             foreach ($json['albaranes'] ?? [] as $alb) {
+                /** @var Albaran $albaran */
                 $albaran = $factura->albaranes()->create([
                     'numero' => self::str($alb['numero_albaran'] ?? null),
                     'fecha' => self::date($alb['fecha_albaran'] ?? null),
@@ -77,7 +81,6 @@ class FacturaNormalizer
                         'iva' => self::num($it['iva'] ?? null),
                         'precio' => self::num($it['precio'] ?? null),
                         'importe' => $importe,
-                        'descuento' => self::num($it['descuento'] ?? null),
                     ]);
                 }
             }

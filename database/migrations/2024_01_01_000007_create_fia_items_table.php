@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -18,7 +20,6 @@ return new class extends Migration
             $table->decimal('iva', 5, 2)->nullable();     // porcentaje
             $table->decimal('precio', 12, 4)->nullable(); // unitario
             $table->decimal('importe', 14, 4)->nullable(); // subtotal de la línea
-            $table->decimal('descuento', 12, 4)->nullable();
             $table->timestamps();
         });
     }

@@ -94,6 +94,26 @@ Factura::recibidas()->sum('total'); // compras (IVA soportado)
 Factura::emitidas()->sum('total');  // ventas   (IVA repercutido)
 ```
 
+### Extracción en cola (async)
+`fromPdf()` es **síncrono** y bloquea la request ~10-20s mientras OpenAI procesa. Para no
+bloquear una petición web, usa la cola: sube el PDF (rápido) y despacha la extracción a un
+worker.
+
+```php
+// Sube y despacha el Job; devuelve el Document (consulta ->factura cuando esté listo).
+$document = FacturasIa::queueFromPdf($request->file('pdf'), auth()->id());
+
+// o, si el Document ya está subido:
+dispatch(new \Appsur\FacturasIa\Jobs\ExtractFacturaJob($document));
+```
+Escucha `FacturaExtracted` / `ExtractionFailed` para saber cuándo termina (necesitas un
+worker: `php artisan queue:work`).
+
+### Dedupe
+Si subes un **PDF idéntico** a uno ya extraído (mismo SHA-256), se devuelve la factura
+existente **sin volver a llamar a OpenAI** (ahorra coste). Se controla con `config
+facturas-ia.dedupe` (`FACTURAS_IA_DEDUPE`, por defecto `true`).
+
 ### Eventos (opcionales)
 El paquete no envía nada; si quieres reaccionar (p. ej. mandar el JSON a tu API), escucha:
 
@@ -108,6 +128,7 @@ Todo se edita en `config/facturas-ia.php`:
   al que se reprocesa si no cuadra (`gpt-4.1`; `null` desactiva el reproceso).
 - **`own_nifs`** — tu(s) NIF (env `FACTURAS_IA_OWN_NIFS`) para autodetectar `tipo`
   (recibida/emitida) comparando con el emisor/receptor de cada factura.
+- **`dedupe`** — si es `true` (por defecto), no re-extrae un PDF idéntico ya procesado.
 - **`prompt`** — instrucciones de extracción.
 - **`fields`** — qué campos se extraen de proveedor/receptor/factura/albarán/línea
   (activar/desactivar/añadir).

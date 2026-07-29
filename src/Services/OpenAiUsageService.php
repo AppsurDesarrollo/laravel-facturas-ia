@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Appsur\FacturasIa\Services;
 
 use Illuminate\Support\Facades\Http;

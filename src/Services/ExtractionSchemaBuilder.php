@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Appsur\FacturasIa\Services;
 
 /**
@@ -18,8 +20,14 @@ class ExtractionSchemaBuilder
         $fields = (array) config('facturas-ia.fields', []);
         $properties = [];
 
-        $properties['proveedor'] = $this->objectFromFields($fields['proveedor'] ?? []);
-        $properties['receptor'] = $this->objectFromFields($fields['receptor'] ?? []);
+        // Un objeto sin propiedades es rechazado por OpenAI en strict mode: si un grupo no
+        // tiene campos habilitados, se omite la clave en lugar de emitir un objeto vacío.
+        if ($this->enabled($fields['proveedor'] ?? [])) {
+            $properties['proveedor'] = $this->objectFromFields($fields['proveedor'] ?? []);
+        }
+        if ($this->enabled($fields['receptor'] ?? [])) {
+            $properties['receptor'] = $this->objectFromFields($fields['receptor'] ?? []);
+        }
 
         foreach ($this->enabled($fields['factura'] ?? []) as $field) {
             $properties[$field['key']] = $this->fieldSchema($field);
