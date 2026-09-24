@@ -49,6 +49,8 @@ class Factura extends Model
         'numero',
         'tipo',
         'fecha',
+        'base_imponible',
+        'cuota_iva',
         'total',
         'portes',
         'cuadra',
@@ -70,6 +72,8 @@ class Factura extends Model
     {
         return [
             'fecha' => 'date',
+            'base_imponible' => 'decimal:4',
+            'cuota_iva' => 'decimal:4',
             'total' => 'decimal:4',
             'portes' => 'decimal:4',
             'cuadra' => 'boolean',

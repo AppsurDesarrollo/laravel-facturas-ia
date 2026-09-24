@@ -3,6 +3,19 @@
 Todos los cambios relevantes de `appsur/laravel-facturas-ia`.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y [SemVer](https://semver.org/lang/es/).
 
+## [2.1.0]
+
+### Added
+- **Base imponible y cuota de IVA:** la extracción devuelve también `base_imponible`
+  (total sin IVA) y `cuota_iva` (importe del IVA), tal como aparecen desglosados en la
+  factura. Nuevas columnas en `fia_facturas`, campos en `fields.factura` y prompt
+  actualizado (con suma de bases/cuotas cuando hay varios tipos de IVA).
+- Si la IA solo consigue uno de los dos valores, el otro se deduce por aritmética
+  (`total = base + IVA`) en `FacturaNormalizer`.
+- Migración de BD `2024_01_04_000000_add_base_iva_to_fia_facturas_table` y migración de
+  ajustes `2024_01_04_000001_add_base_iva_fields` (añade los campos al grupo `factura`
+  en instalaciones existentes y refresca el prompt).
+
 ## [2.0.0]
 
 > **Breaking:** los ajustes editables pasan de `config/facturas-ia.php` a la **base de datos**

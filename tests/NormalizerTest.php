@@ -59,6 +59,46 @@ class NormalizerTest extends TestCase
         $this->assertCount(2, $factura->albaranes->first()->items);
     }
 
+    public function test_extracts_base_imponible_and_cuota_iva(): void
+    {
+        $json = $this->sample('BI-1');
+        $json['base_imponible'] = 100.0;
+        $json['cuota_iva'] = 21.0;
+        [$doc, $run] = $this->makeRun($json);
+
+        FacturaNormalizer::fromRun($doc, $run);
+
+        $factura = $doc->refresh()->factura;
+        $this->assertEqualsWithDelta(100.0, (float) $factura->base_imponible, 0.001);
+        $this->assertEqualsWithDelta(21.0, (float) $factura->cuota_iva, 0.001);
+    }
+
+    public function test_derives_missing_base_or_cuota_from_total(): void
+    {
+        // Solo llega la cuota: la base se deduce (total - cuota).
+        $json = $this->sample('BI-2');
+        $json['base_imponible'] = null;
+        $json['cuota_iva'] = 21.0;
+        [$doc, $run] = $this->makeRun($json);
+        FacturaNormalizer::fromRun($doc, $run);
+        $this->assertEqualsWithDelta(100.0, (float) $doc->refresh()->factura->base_imponible, 0.001);
+
+        // Solo llega la base: la cuota se deduce (total - base).
+        $json = $this->sample('BI-3');
+        $json['base_imponible'] = 100.0;
+        $json['cuota_iva'] = null;
+        [$doc2, $run2] = $this->makeRun($json);
+        FacturaNormalizer::fromRun($doc2, $run2);
+        $this->assertEqualsWithDelta(21.0, (float) $doc2->refresh()->factura->cuota_iva, 0.001);
+
+        // Sin ninguno de los dos: se quedan a null (no se inventan).
+        $json = $this->sample('BI-4');
+        [$doc3, $run3] = $this->makeRun($json);
+        FacturaNormalizer::fromRun($doc3, $run3);
+        $this->assertNull($doc3->refresh()->factura->base_imponible);
+        $this->assertNull($doc3->refresh()->factura->cuota_iva);
+    }
+
     public function test_marks_duplicada_on_same_proveedor_and_numero(): void
     {
         [$doc1, $run1] = $this->makeRun($this->sample('DUP-1'));

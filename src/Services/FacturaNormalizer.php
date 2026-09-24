@@ -43,6 +43,18 @@ class FacturaNormalizer
             $extractedTotal = self::num($json['total'] ?? null);
             $numero = self::str($json['numero_factura'] ?? null);
 
+            // Base imponible y cuota de IVA tal como figuran en la factura. Si falta
+            // uno de los dos, se deduce por aritmética (total = base + IVA).
+            $base = self::num($json['base_imponible'] ?? null);
+            $cuotaIva = self::num($json['cuota_iva'] ?? null);
+            if ($extractedTotal !== null) {
+                if ($base === null && $cuotaIva !== null) {
+                    $base = round($extractedTotal - $cuotaIva, 4);
+                } elseif ($cuotaIva === null && $base !== null) {
+                    $cuotaIva = round($extractedTotal - $base, 4);
+                }
+            }
+
             // Duplicada: ya existe otra factura con el mismo proveedor (NIF) y nº.
             // La factura previa de ESTE documento ya se borró arriba, así que no se auto-marca.
             $duplicada = $proveedor !== null && $numero !== null
@@ -56,6 +68,8 @@ class FacturaNormalizer
                 'numero' => $numero,
                 'tipo' => self::resolveTipo($tipo, $proveedor, $receptor),
                 'fecha' => self::date($json['fecha'] ?? null),
+                'base_imponible' => $base,
+                'cuota_iva' => $cuotaIva,
                 'total' => $extractedTotal,
                 'portes' => self::num($json['portes'] ?? null),
                 'cuadra' => CuadreChecker::cuadra($json),

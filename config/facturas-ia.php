@@ -30,6 +30,8 @@ Reglas de formato:
 - Devuelve importes y cantidades como números (sin símbolos de moneda ni separadores de miles). Usa punto como separador decimal.
 - El IVA es el porcentaje aplicado (por ejemplo 21 para 21%).
 - Las fechas en formato ISO: YYYY-MM-DD.
+- "base_imponible": la BASE IMPONIBLE de la factura, es decir, el total SIN IVA (busca "BASE IMPONIBLE", "BASE", "SUBTOTAL" o "TOTAL SIN IVA", normalmente en el resumen final). Si la factura desglosa varias bases (varios tipos de IVA), devuelve la SUMA de todas las bases.
+- "cuota_iva": el IMPORTE del IVA en euros (la CUOTA, no el porcentaje): en "IVA 21% — 210,00" la cuota es 210.00. Si hay varios tipos de IVA, devuelve la SUMA de todas las cuotas. Comprueba que base_imponible + cuota_iva cuadra con el total.
 - "total" es el importe TOTAL de la factura (busca "TOTAL", "TOTAL FACTURA", "TOTAL A PAGAR", "IMPORTE TOTAL" o "TOTAL EUROS", normalmente al final). Extráelo SIEMPRE, aunque sea 0. Si es una nota de crédito, un abono o una factura rectificativa, el total puede ser NEGATIVO: extráelo con su signo (por ejemplo -53.70).
 - "portes": la SUMA de los cargos que NO son líneas de producto: gastos de envío, portes, transporte, manipulación (handling/shipping charges), financiación o recargos. Aparecen aparte de las líneas (por ejemplo "Shipping charges", "Portes", "Gastos de envío"). Si no hay ninguno, ponlo a null. Recuerda: total de la factura = suma de las líneas + portes + IVA.
 - Si un dato no aparece en la factura, ponlo a null. No inventes valores.
@@ -191,6 +193,8 @@ return [
             $field('numero_factura', 'Número de factura'),
             $field('fecha', 'Fecha', 'date'),
             $field('portes', 'Portes / gastos de envío', 'number'),
+            $field('base_imponible', 'Base imponible (total sin IVA)', 'number'),
+            $field('cuota_iva', 'Cuota de IVA (importe)', 'number'),
             $field('total', 'Total de la factura', 'number'),
         ],
         'albaran' => [

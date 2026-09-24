@@ -75,9 +75,11 @@ $factura = FacturasIa::fromPdf($request->file('pdf'), auth()->id());
 // o desde una ruta en disco:
 $factura = FacturasIa::fromPdf(storage_path('app/facturas/ejemplo.pdf'));
 
-$factura->numero;      // "260492"
-$factura->total;       // 4773.85
-$factura->cuadra;      // true  (la suma de líneas + portes cuadra con el total)
+$factura->numero;         // "260492"
+$factura->base_imponible; // 3945.33  (total sin IVA; si falta, se deduce: total − cuota)
+$factura->cuota_iva;      // 828.52   (importe del IVA; si falta, se deduce: total − base)
+$factura->total;          // 4773.85
+$factura->cuadra;         // true  (la suma de líneas + portes cuadra con el total)
 $factura->duplicada;   // true si ya existe otra con el mismo NIF + nº
 $factura->proveedor;   // Proveedor (dedupe por NIF)
 $factura->receptor;    // Receptor
